@@ -12,6 +12,7 @@ public class Currency {
 	private double slope;
 
 	private double rate;
+	private double limit;
 	private long lastRateUpdate;
 
 	public static Currency getCurrency(String name) {
@@ -19,6 +20,19 @@ public class Currency {
 			return currencies.put(name, new Currency(name));
 		}
 		return currencies.get(name);
+	}
+	
+	public double getLimit() {
+		return limit;
+	}
+	
+	public void increaseLimit(double inc) {
+		this.limit += inc;
+	}
+	
+	public void decreaseLimit(double dec) {
+		this.limit -= dec;
+		if (limit < 0) limit = 0;
 	}
 
 	public static Collection<Currency> getCurrencies() {
@@ -29,7 +43,7 @@ public class Currency {
 		this.name = name;
 	}
 	
-	public String getInverseCurrency() {
+	public String getInverseName() {
 		String inverse = name.substring(3) + name.substring(0, 3);
 		return inverse;
 	}

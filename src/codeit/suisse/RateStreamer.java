@@ -65,13 +65,13 @@ public class RateStreamer extends Thread {
 							.getJSONObject("fxValue");
 
 					if (currency.getRate() != rateInfo.getDouble("fxRate")) {
-						// System.out
-						// .format("FX Rate for currency %s updated %s second(s) ago. New FX Rate: %f | Change in Rate: %f | Slope: %f |\n",
-						// rateInfo.getString("currencyPair"),
-						// calculateTimeChange(currency),
-						// rateInfo.getDouble("fxRate"),
-						// calculateRateChange(currency, rateInfo),
-						// calculateSlope(currency, rateInfo));
+						System.out
+								.format("FX Rate for currency %s updated %s second(s) ago. New FX Rate: %f | Change in Rate: %f | Slope: %f |\n",
+										rateInfo.getString("currencyPair"),
+										calculateTimeChange(currency),
+										rateInfo.getDouble("fxRate"),
+										calculateRateChange(currency, rateInfo),
+										calculateSlope(currency, rateInfo));
 						currency.setSlope(calculateSlope(currency, rateInfo));
 						currency.setRate(rateInfo.getDouble("fxRate"));
 						currency.setLastRateUpdate(System.currentTimeMillis());

@@ -1,8 +1,6 @@
 package codeit.suisse;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import codeit.suisse.Forecast.ForecastCallback;
@@ -16,11 +14,11 @@ public class Main implements ForecastCallback, RateCallback {
 
 	public static final String[] CURRENCY_NAMES = new String[] { "CSC", "USD",
 			"EUR", "SGD", "AUD" };
-	
+
 	private RateStreamer rateStreamer;
 	private ForecastStreamer forecastStreamer;
 
-	public static final int TRADE_AMOUNT = 1000;
+	public static final int TRADE_AMOUNT = 500;
 
 	static {
 		// for (int x = 0; x < CURRENCY_NAMES.length; x++) {
@@ -81,21 +79,12 @@ public class Main implements ForecastCallback, RateCallback {
 						forecast.getCurrentPredictedRate(), forecast
 								.getCurrency().getRate());
 
-		try {
-			if (forecast.getCurrency().getRate()
-					- forecast.getCurrentPredictedRate() < 0) {
-				Runtime.getRuntime().exec(
-						"node -e \"require('./trade')('"
-								+ forecast.getCurrency().getInverseCurrency()
-								+ "', " + TRADE_AMOUNT * 10 / 2 + ")\"");
-			} else {
-				Runtime.getRuntime().exec(
-						"node -e \"require('./trade')('"
-								+ forecast.getCurrency().getName() + "', "
-								+ TRADE_AMOUNT * 10 + ")\"");
-			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		if (forecast.getCurrency().getRate()
+				- forecast.getCurrentPredictedRate() < 0
+				&& forecast.getCurrency().getLimit() < TRADE_AMOUNT * 20) {
+			buy(forecast.getCurrency(), TRADE_AMOUNT);
+		} else if (forecast.getCurrency().getLimit() > TRADE_AMOUNT * 2) {
+			sell(forecast.getCurrency(), TRADE_AMOUNT);
 		}
 	}
 
@@ -109,25 +98,37 @@ public class Main implements ForecastCallback, RateCallback {
 
 	@Override
 	public void onForecastUpdate(Forecast forecast, boolean up) {
+		if (up && forecast.getCurrency().getLimit() > TRADE_AMOUNT * 2) {
+			sell(forecast.getCurrency(), TRADE_AMOUNT / 2);
+		} else if (forecast.getCurrency().getLimit() < TRADE_AMOUNT * 5) {
+			buy(forecast.getCurrency(), TRADE_AMOUNT / 2);
+		}
+	}
+
+	public void buy(Currency currency, int money) {
 		try {
-			if (up) {
-				System.out
-						.format("Traded %d in currency %s as a result of forecast distribution.\n",
-								TRADE_AMOUNT, forecast.getCurrency().getName());
-				Runtime.getRuntime().exec(
-						"node -e \"require('./trade')('"
-								+ forecast.getCurrency().getName() + "', "
-								+ TRADE_AMOUNT + ")\"");
-			} else if (forecast.getCurrency().getRate() < 0) {
-				System.out
-						.format("Traded %d in currency %s as a result of forecast distribution.\n",
-								TRADE_AMOUNT, forecast.getCurrency()
-										.getInverseCurrency());
-				Runtime.getRuntime().exec(
-						"node -e \"require('./trade')('"
-								+ forecast.getCurrency().getInverseCurrency()
-								+ "', " + TRADE_AMOUNT + ")\"");
-			}
+			System.out.format("Bought $%d of %s dollars, by trading %s.\n",
+					money, currency.getName().substring(3), currency.getName()
+							.substring(0, 3));
+			Runtime.getRuntime().exec(
+					"node -e \"require('./trade')('" + currency.getName()
+							+ "', " + TRADE_AMOUNT + ")\"");
+			currency.increaseLimit(money);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+
+	public void sell(Currency currency, int money) {
+		try {
+			System.out.format("Sold $%d of %s dollars, and obtained %s.\n",
+					money, currency.getInverseName().substring(0, 3), currency
+							.getInverseName().substring(3));
+			Runtime.getRuntime().exec(
+					"node -e \"require('./trade')('"
+							+ currency.getInverseName() + "', " + TRADE_AMOUNT
+							+ ")\"");
+			currency.decreaseLimit(money);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}

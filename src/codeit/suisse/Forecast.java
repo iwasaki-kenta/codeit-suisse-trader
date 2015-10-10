@@ -84,7 +84,7 @@ public class Forecast implements Runnable {
 				}
 
 				if (System.currentTimeMillis() - lastTick >= new Random()
-						.nextInt(10000) + 10000) {
+						.nextInt(3000) + 2000) {
 					lastSlope = (lastSlope + Currency.getCurrency(currency)
 							.getSlope()) / 2;
 					callback.onForecastUpdate(this, lastSlope > 0);

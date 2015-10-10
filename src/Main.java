@@ -40,7 +40,7 @@ public class Main {
 		private void streamFXNews() throws IOException {
 			JSONArray news = new JSONObject(Request.Get(apiUrl + "news/fx")
 					.execute().returnContent().asString()).getJSONArray("news");
-			
+
 			boolean found = false;
 			for (int i = 0; i < news.length(); i++) {
 				JSONObject newsObj = news.getJSONObject(i);
@@ -61,19 +61,24 @@ public class Main {
 					currentRates.put(rateInfo.getString("currencyPair"),
 							currency);
 
-					System.out.format("New currency found: %s - FX Rate: %f\n",
-							rateInfo.getString("currencyPair"),
-							rateInfo.getDouble("fxRate"));
+					System.out
+							.format("New currency found: %s - FX Rate: %f | Impact: %d | Window Time: %d\n",
+									rateInfo.getString("currencyPair"),
+									rateInfo.getDouble("fxRate"),
+									newsObj.getInt("impact"),
+									newsObj.getInt("windowMinutes"));
 				} else if (currentRates.get(rateInfo.getString("currencyPair"))
 						.getRate() != rateInfo.getDouble("fxRate")) {
 					Currency currency = currentRates.get(rateInfo
 							.getString("currencyPair"));
 
 					System.out
-							.format("Updated currency %s from %s seconds ago. New FX Rate: %f | Change in Rate: %f | Slope: %f |\n",
+							.format("Updated currency %s from %s seconds ago. New FX Rate: %f | Impact: %d | Window Time: %d | Change in Rate: %f | Slope: %f |\n",
 									rateInfo.getString("currencyPair"),
 									calculateTimeChange(currency),
 									rateInfo.getDouble("fxRate"),
+									newsObj.getInt("impact"),
+									newsObj.getInt("windowMinutes"),
 									calculateRateChange(currency, rateInfo),
 									calculateSlope(currency, rateInfo));
 

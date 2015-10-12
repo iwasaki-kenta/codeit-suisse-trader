@@ -1,51 +1,51 @@
 package codeit.suisse;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.http.client.fluent.Request;
+import org.json.JSONObject;
+
 public class Currency {
-	private static final Map<String, Currency> currencies = new HashMap<String, Currency>();
+	public static final String[] CURRENCY_NAMES = new String[] { "CSC", "USD",
+			"EUR", "SGD", "AUD" };
 
-	private String name;
+	private static final Map<String, Currency> currencies = new HashMap<String, Currency>() {
+		{
+			for (int x = 0; x < CURRENCY_NAMES.length; x++) {
+				for (int y = CURRENCY_NAMES.length - 1; y >= 0; y--) {
+					if (x != y) {
+						String pairName = CURRENCY_NAMES[x] + CURRENCY_NAMES[y];
 
-	private double slope;
+						try {
+							JSONObject rateInfo = new JSONObject(Request
+									.Get(Main.API_URL + "fx/" + pairName)
+									.execute().returnContent().asString())
+									.getJSONObject("fxValue");
 
-	private double rate;
-	private double limit;
+							Currency currency = new Currency();
+							currency.setRate(rateInfo.getDouble("fxRate"));
+							currency.setLastRateUpdate(rateInfo.getLong("valueTime"));
+
+							put(pairName, currency);
+						} catch (Exception ex) {
+							continue;
+						}
+					}
+				}
+			}
+		}
+	};
+
+	private double rate, slope;
 	private long lastRateUpdate;
 
 	public static Currency getCurrency(String name) {
-		if (!currencies.containsKey(name)) {
-			return currencies.put(name, new Currency(name));
-		}
 		return currencies.get(name);
 	}
-	
-	public double getLimit() {
-		return limit;
-	}
-	
-	public void increaseLimit(double inc) {
-		this.limit += inc;
-	}
-	
-	public void decreaseLimit(double dec) {
-		this.limit -= dec;
-		if (limit < 0) limit = 0;
-	}
 
-	public static Collection<Currency> getCurrencies() {
-		return currencies.values();
-	}
-
-	private Currency(String name) {
-		this.name = name;
-	}
-	
-	public String getInverseName() {
-		String inverse = name.substring(3) + name.substring(0, 3);
-		return inverse;
+	public static Map<String, Currency> getCurrencies() {
+		return currencies;
 	}
 
 	public double getSlope() {
@@ -54,14 +54,6 @@ public class Currency {
 
 	public void setSlope(double slope) {
 		this.slope = slope;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public double getRate() {
